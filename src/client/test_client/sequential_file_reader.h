@@ -1,6 +1,7 @@
 #pragma once
 
 #include <fcntl.h>
+#include <filesystem>
 #include <sys/mman.h>
 #include <sys/stat.h>
 
@@ -14,7 +15,7 @@ class MMapPtr : public std::unique_ptr<T, std::function<void(T *)>>
 {
 public:
     MMapPtr(T *addr, size_t len, int fd = -1)
-        : std::unique_ptr<T, std::function<void(T *)>>(addr, [len, fd](T *addr) { unmap_and_close(addr, len, fd); })
+        : std::unique_ptr<T, std::function<void(T *)>>(addr, [len, fd](T *addr) { UnmapAndClose(addr, len, fd); })
     {
     }
 
@@ -27,7 +28,7 @@ public:
     using std::unique_ptr<T, std::function<void(T *)>>::operator=;
 
 private:
-    static void unmap_and_close(const void *addr, size_t len, int fd)
+    static void UnmapAndClose(const void *addr, size_t len, int fd)
     {
         if ((MAP_FAILED != addr) && (nullptr != addr) && (len > 0))
         {
@@ -89,37 +90,33 @@ protected:
         , data_(nullptr)
         , size_(0)
     {
-        int fd = open(file_name.c_str(), O_RDONLY);
-        if (-1 == fd)
+        if (!std::filesystem::exists(file_name))
+        {
+            raise_from_errno("File does not exist.");
+        }
+        if (!std::filesystem::is_regular_file(file_name))
+        {
+            raise_from_errno("Not a regular file.");
+        }
+
+        auto fd = open(file_name.c_str(), O_RDONLY);
+        if (fd < 0)
         {
             raise_from_errno("Failed to open file.");
         }
 
-        // Ensure that fd will be closed if this method aborts at any point
-        MMapPtr<const std::uint8_t> mmap_p(nullptr, 0, fd);
-
-        struct stat st
+        if (size_ = std::filesystem::file_size(file_name); size_ > 0)
         {
-        };
-        int rc = fstat(fd, &st);
-        if (-1 == rc)
-        {
-            raise_from_errno("Failed to read file size.");
-        }
-        size_ = st.st_size;
-        if (size_ > 0)
-        {
-            // std::cout << size_ << ' ' << PROT_READ << ' ' << MAP_FILE << ' ' << fd << std::endl;
             void *const mapping = mmap(0, size_, PROT_READ, MAP_FILE | MAP_SHARED, fd, 0);
-            if (MAP_FAILED == mapping)
+            if (mapping == MAP_FAILED)
             {
                 raise_from_errno("Failed to map the file into memory.");
             }
 
             // Close the file descriptor, and protect the newly acquired memory mapping inside an object
-            mmap_p = MMapPtr<const std::uint8_t>(static_cast<std::uint8_t *>(mapping), size_, -1);
+            auto mmap_p = MMapPtr<const std::uint8_t>(static_cast<std::uint8_t *>(mapping), size_, fd);
             // Inform the kernel we plan sequential access
-            rc = posix_madvise(mapping, size_, POSIX_MADV_SEQUENTIAL);
+            int rc = posix_madvise(mapping, size_, POSIX_MADV_SEQUENTIAL);
             if (-1 == rc)
             {
                 raise_from_errno("Failed to set intended access pattern useing posix_madvise().");
