@@ -7,7 +7,7 @@ option java_outer_classname = "TestProto";
 option java_multiple_files  = true;
 
 message RegisterAccountRequest {
-    uint32 session_ix = 1;
+    uint32 session_id = 1;
     uint32 tick       = 2;
     string ip_str     = 3;
     string account    = 4;
@@ -17,7 +17,7 @@ message RegisterAccountRequest {
 
 message RegisterAccountResponse {
     uint32 result      = 1;
-    uint32 session_ix  = 2;
+    uint32 session_id  = 2;
     uint32 tick        = 3;
     uint32 account_id  = 4;
     uint32 account_pri = 5;
@@ -25,13 +25,13 @@ message RegisterAccountResponse {
 }
 
 message ClientHeartBeat {
-    uint32 session_ix = 1;
+    uint32 session_id = 1;
     uint32 tick   = 2;
 }
 
 message ServerHeartBeat {
     uint32 result     = 1;
-    uint32 session_ix = 2;
+    uint32 session_id = 2;
     uint32 tick       = 3;
     uint32 om         = 5;
 }

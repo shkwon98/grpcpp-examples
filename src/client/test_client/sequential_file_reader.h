@@ -5,6 +5,8 @@
 #include <memory>
 #include <string>
 
+#include "utils.h"
+
 // SequentialFileReader: Read a file using using mmap(). Attempt to overlap reads of the file and writes by the user's code
 // by reading the next segment
 

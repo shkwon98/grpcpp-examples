@@ -1,26 +1,4 @@
-#include <cassert>
-#include <sstream>
-#include <stdexcept>
-
-// Select GNU basename() on Linux
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-
-#include <libgen.h>
-#include <limits.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "utils.h"
-
-std::string extract_basename(const std::string &path)
-{
-    char *const temp_s = strdup(path.c_str());
-    std::string result(basename(temp_s));
-    free(temp_s);
-    return result;
-}
 
 void raise_from_system_error_code(const std::string &user_message, int err)
 {
@@ -38,3 +16,56 @@ void raise_from_errno(const std::string &user_message)
 {
     raise_from_system_error_code(user_message, errno);
 }
+
+namespace System
+{
+
+long long GetSystemTickNanos()
+{
+    auto time = std::chrono::system_clock::now();
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(time.time_since_epoch()).count();
+}
+
+long long GetSystemTickMillis()
+{
+    auto time = std::chrono::system_clock::now();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(time.time_since_epoch()).count();
+}
+
+long long GetSystemTickSeconds()
+{
+    auto time = std::chrono::system_clock::now();
+    return std::chrono::duration_cast<std::chrono::seconds>(time.time_since_epoch()).count();
+}
+
+int GetSystemTickMinutes()
+{
+    auto time = std::chrono::system_clock::now();
+    return (int)(std::chrono::duration_cast<std::chrono::minutes>(time.time_since_epoch()).count());
+}
+
+long long GetSteadyTickNanos()
+{
+    auto time = std::chrono::steady_clock::now();
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(time.time_since_epoch()).count();
+}
+
+long long GetSteadyTickMillis()
+{
+    auto time = std::chrono::steady_clock::now();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(time.time_since_epoch()).count();
+}
+
+long long GetSteadyTickSeconds()
+{
+    auto time = std::chrono::steady_clock::now();
+    return std::chrono::duration_cast<std::chrono::seconds>(time.time_since_epoch()).count();
+}
+
+int GetSteadyTickMinutes()
+{
+    auto time = std::chrono::steady_clock::now();
+    return (int)(std::chrono::duration_cast<std::chrono::minutes>(time.time_since_epoch()).count());
+}
+
+} // namespace System

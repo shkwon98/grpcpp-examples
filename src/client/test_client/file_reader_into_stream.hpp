@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <filesystem>
 #include <string>
 #include <sys/errno.h>
 
@@ -23,7 +24,7 @@ public:
 protected:
     virtual void OnChunkAvailable(const void *data, size_t size) override
     {
-        const std::string remote_filename = extract_basename(GetFilePath());
+        const std::string remote_filename = std::filesystem::path(GetFilePath()).filename();
 
         robl::api::FileContent fc;
         fc.set_name(std::move(remote_filename));

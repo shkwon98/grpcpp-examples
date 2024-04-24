@@ -20,19 +20,19 @@ class TestServiceImpl final : public TestService::Service
 {
 public:
     TestServiceImpl(void)
-        : root_path_(std::filesystem::current_path())
+        : root_path_(std::filesystem::current_path() / "uploads")
     {
     }
     ::grpc::Status RegisterAccount(::grpc::ServerContext *context, const RegisterAccountRequest *request,
                                    RegisterAccountResponse *response) override
     {
-        if (request->session_ix() != -1)
+        if (request->session_id() != -1)
         {
-            return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "session_ix is not -1");
+            return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "session_id is not -1");
         }
 
         response->set_result(0);
-        response->set_session_ix(1);
+        response->set_session_id(1);
         response->set_tick(request->tick());
         if (request->account() == "admin")
         {
@@ -56,11 +56,11 @@ public:
         ClientHeartBeat clientHeartBeat;
         while (stream->Read(&clientHeartBeat))
         {
-            std::cout << "[HeartBeat] session_ix: " << clientHeartBeat.session_ix() << std::endl;
+            std::cout << "[HeartBeat] session_id: " << clientHeartBeat.session_id() << std::endl;
             std::cout << "[HeartBeat] tick: " << clientHeartBeat.tick() << std::endl;
 
             serverHeartBeat.set_result(0);
-            serverHeartBeat.set_session_ix(clientHeartBeat.session_ix());
+            serverHeartBeat.set_session_id(clientHeartBeat.session_id());
             serverHeartBeat.set_tick(clientHeartBeat.tick());
             serverHeartBeat.set_om(11);
 

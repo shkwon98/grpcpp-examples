@@ -9,7 +9,6 @@
 #include <unistd.h>
 
 #include "sequential_file_reader.h"
-#include "utils.h"
 
 namespace
 {
