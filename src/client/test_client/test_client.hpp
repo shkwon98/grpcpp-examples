@@ -30,7 +30,7 @@ public:
     }
 
     RegisterAccountResponse RegisterAccount(const RegisterAccountRequest &request);
-    void HeartBeat(void);
+    bool HeartBeat(void);
     bool UploadFile(const std::string &filename);
 
 private:
@@ -43,10 +43,11 @@ inline RegisterAccountResponse TestClient::RegisterAccount(const RegisterAccount
     grpc::ClientContext context;
     RegisterAccountResponse response;
 
-    auto status = stub_->RegisterAccount(&context, request, &response);
+    const auto status = stub_->RegisterAccount(&context, request, &response);
+
     if (!status.ok())
     {
-        std::cerr << "RPC failed: " << status.error_message() << std::endl;
+        std::cerr << "RegisterAccount rpc failed: " << status.error_code() << ": " << status.error_message() << std::endl;
         return RegisterAccountResponse();
     }
 
@@ -61,51 +62,53 @@ inline RegisterAccountResponse TestClient::RegisterAccount(const RegisterAccount
     return response;
 }
 
-inline void TestClient::HeartBeat(void)
+inline bool TestClient::HeartBeat(void)
 {
     grpc::ClientContext context;
     std::shared_ptr<grpc::ClientReaderWriter<ClientHeartBeat, ServerHeartBeat>> streamer(stub_->HeartBeat(&context));
+    ClientHeartBeat request;
+    ServerHeartBeat response;
 
     while (true)
     {
-        ClientHeartBeat request;
+        const auto &now = std::chrono::system_clock::now();
+
         request.set_session_id(session_id_);
-        request.set_tick(std::chrono::system_clock::now().time_since_epoch().count());
         request.set_tick(System::GetSystemTickMillis());
         streamer->Write(request);
 
-        ServerHeartBeat response;
         if (streamer->Read(&response))
         {
-            std::cout << "[ServerHeartBeat] result: " << response.result() << std::endl;
-            std::cout << "[ServerHeartBeat] session_id: " << response.session_id() << std::endl;
-            std::cout << "[ServerHeartBeat] tick: " << response.tick() << std::endl;
-            std::cout << "[ServerHeartBeat] om: " << response.om() << std::endl;
+            std::cout << "[ServerHeartBeat] result: " << response.result() << std::endl
+                      << "[ServerHeartBeat] session_id: " << response.session_id() << std::endl
+                      << "[ServerHeartBeat] tick: " << response.tick() << std::endl
+                      << "[ServerHeartBeat] om: " << response.om() << std::endl;
         }
-        std::this_thread::sleep_for(1s);
+
+        std::this_thread::sleep_until(now + 1s);
     }
 
-    auto status = streamer->Finish();
-    if (status.ok())
+    const auto status = streamer->Finish();
+
+    if (!status.ok())
     {
-        std::cout << "Stream finished." << std::endl;
+        std::cerr << "HeartBeat rpc failed: " << status.error_code() << ": " << status.error_message() << std::endl;
+        return false;
     }
-    else
-    {
-        std::cerr << "Error in RPC: " << status.error_code() << ": " << status.error_message() << std::endl;
-    }
+
+    return true;
 }
 
 inline bool TestClient::UploadFile(const std::string &filename)
 {
     grpc::ClientContext context;
+    std::unique_ptr<grpc::ClientReaderWriter<FileContent, Status>> streamer(stub_->UploadFile(&context));
 
-    std::unique_ptr<grpc::ClientReaderWriter<FileContent, Status>> writer(stub_->UploadFile(&context));
     try
     {
-        FileReaderIntoStream<grpc::ClientReaderWriter<FileContent, Status>> reader(filename, *writer);
+        auto reader = FileReaderIntoStream(filename, *streamer);
 
-        const size_t chunk_size = 1UL << 20; // Hardcoded to 1MB, which seems to be recommended from experience.
+        const size_t chunk_size = 1 * MB; // Hardcoded to 1MB, which seems to be recommended from experience.
         reader.Read(chunk_size);
     }
     catch (const std::exception &ex)
@@ -113,16 +116,13 @@ inline bool TestClient::UploadFile(const std::string &filename)
         std::cerr << "Failed to send the file " << filename << ": " << ex.what() << std::endl;
     }
 
-    writer->WritesDone();
-    grpc::Status status = writer->Finish();
+    streamer->WritesDone();
+    const auto status = streamer->Finish();
+
     if (!status.ok())
     {
-        std::cerr << "File Uploading rpc failed: " << status.error_message() << std::endl;
+        std::cerr << "UploadFile rpc failed: " << status.error_code() << ": " << status.error_message() << std::endl;
         return false;
-    }
-    else
-    {
-        std::cout << "Finished sending file" << std::endl;
     }
 
     return true;

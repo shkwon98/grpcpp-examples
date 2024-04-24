@@ -56,8 +56,8 @@ public:
         ClientHeartBeat clientHeartBeat;
         while (stream->Read(&clientHeartBeat))
         {
-            std::cout << "[HeartBeat] session_id: " << clientHeartBeat.session_id() << std::endl;
-            std::cout << "[HeartBeat] tick: " << clientHeartBeat.tick() << std::endl;
+            std::cout << "[HeartBeat] session_id: " << clientHeartBeat.session_id() << std::endl
+                      << "[HeartBeat] tick: " << clientHeartBeat.tick() << std::endl;
 
             serverHeartBeat.set_result(0);
             serverHeartBeat.set_session_id(clientHeartBeat.session_id());
@@ -79,6 +79,9 @@ public:
 
         while (stream->Read(&content_part))
         {
+            std::cout << "[UploadFile] name: " << content_part.name() << std::endl
+                      << "[UploadFile] content size: " << content_part.content().size() << std::endl;
+
             try
             {
                 writer.OpenIfNecessary(root_path_ / content_part.name());

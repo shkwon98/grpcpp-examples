@@ -8,18 +8,15 @@
 #include "sequential_file_reader.h"
 #include "utils.h"
 
-template <class StreamWriter>
+template <class GrpcWriter>
 class FileReaderIntoStream : public SequentialFileReader
 {
 public:
-    FileReaderIntoStream(const std::string &filename, StreamWriter &writer)
+    FileReaderIntoStream(const std::string &filename, GrpcWriter &writer)
         : SequentialFileReader(filename)
         , writer_(writer)
     {
     }
-
-    // using SequentialFileReader::SequentialFileReader;
-    // using SequentialFileReader::operator=;
 
 protected:
     virtual void OnChunkAvailable(const void *data, size_t size) override
@@ -37,5 +34,5 @@ protected:
     }
 
 private:
-    StreamWriter &writer_;
+    GrpcWriter &writer_;
 };

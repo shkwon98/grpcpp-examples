@@ -46,3 +46,7 @@ struct __TIME__CHECK__
     }
 };
 #define timecheck if (__TIME__CHECK__ _TIME_CHECK_RUN_{})
+
+#define KB (1ULL << 10)
+#define MB (1ULL << 20)
+#define GB (1ULL << 30)
