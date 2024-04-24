@@ -10,22 +10,31 @@
 namespace
 {
 
-template <typename T>
-class MMapPtr : public std::unique_ptr<T, std::function<void(T *)>>
+using VoidPtr = std::unique_ptr<void, std::function<void(void *)>>;
+
+class MMapPtr : public VoidPtr
 {
 public:
-    MMapPtr(T *addr, size_t len, int fd = -1)
-        : std::unique_ptr<T, std::function<void(T *)>>(addr, [len, fd](T *addr) { UnmapAndClose(addr, len, fd); })
+    MMapPtr(size_t size, int fd)
+        : VoidPtr(mapping_, [size, fd](void *addr) { UnmapAndClose(addr, size, fd); })
+        , mapping_(mmap(0, size, PROT_READ, MAP_FILE | MAP_SHARED, fd, 0))
     {
-    }
+        if (mapping_ == MAP_FAILED)
+        {
+            throw std::system_error(std::error_code(errno, std::system_category()), "Failed to map the file into memory.");
+        }
 
-    MMapPtr()
-        : MMapPtr(nullptr, 0, -1)
-    {
+        // Inform the kernel we plan sequential access
+        int rc = posix_madvise(mapping_, size, POSIX_MADV_SEQUENTIAL);
+        if (rc == -1)
+        {
+            throw std::system_error(std::error_code(errno, std::system_category()),
+                                    "Failed to set intended access pattern using posix_madvise().");
+        }
     }
-
-    using std::unique_ptr<T, std::function<void(T *)>>::unique_ptr;
-    using std::unique_ptr<T, std::function<void(T *)>>::operator=;
+    MMapPtr() = delete;
+    using VoidPtr::unique_ptr;
+    using VoidPtr::operator=;
 
 private:
     static void UnmapAndClose(const void *addr, size_t len, int fd)
@@ -42,7 +51,10 @@ private:
 
         return;
     }
+
+    void *mapping_;
 };
+
 }; // Anonymous namespace
 
 // SequentialFileReader: Read a file using using mmap(). Attempt to overlap reads of the file and writes by the user's code
@@ -72,7 +84,7 @@ public:
         {
             size_t bytes_to_read = std::min(max_chunk_size, size_ - bytes_read);
 
-            OnChunkAvailable(data_.get() + bytes_read, bytes_to_read);
+            OnChunkAvailable(static_cast<const uint8_t *>(data_.get()) + bytes_read, bytes_to_read);
 
             bytes_read += bytes_to_read;
         }
@@ -92,47 +104,32 @@ protected:
     {
         if (!std::filesystem::exists(file_name))
         {
-            raise_from_errno("File does not exist.");
+            throw std::system_error(std::error_code(errno, std::system_category()), "File does not exist.");
         }
         if (!std::filesystem::is_regular_file(file_name))
         {
-            raise_from_errno("Not a regular file.");
+            throw std::system_error(std::error_code(errno, std::system_category()), "Not a regular file.");
         }
 
         auto fd = open(file_name.c_str(), O_RDONLY);
         if (fd < 0)
         {
-            raise_from_errno("Failed to open file.");
+            throw std::system_error(std::error_code(errno, std::system_category()), "Failed to open file.");
         }
 
         if (size_ = std::filesystem::file_size(file_name); size_ > 0)
         {
-            void *const mapping = mmap(0, size_, PROT_READ, MAP_FILE | MAP_SHARED, fd, 0);
-            if (mapping == MAP_FAILED)
-            {
-                raise_from_errno("Failed to map the file into memory.");
-            }
-
-            // Close the file descriptor, and protect the newly acquired memory mapping inside an object
-            auto mmap_p = MMapPtr<const std::uint8_t>(static_cast<std::uint8_t *>(mapping), size_, fd);
-            // Inform the kernel we plan sequential access
-            int rc = posix_madvise(mapping, size_, POSIX_MADV_SEQUENTIAL);
-            if (-1 == rc)
-            {
-                raise_from_errno("Failed to set intended access pattern useing posix_madvise().");
-            }
+            auto mmap_p = MMapPtr(size_, fd);
 
             data_.swap(mmap_p);
         }
     }
-
-    // TODO: Also provide a constructor that doesn't open the file, and a separate Open method.
 
     // OnChunkAvailable: The user needs to override this function to get called when data become available.
     virtual void OnChunkAvailable(const void *data, size_t size) = 0;
 
 private:
     std::string file_path_;
-    std::unique_ptr<const std::uint8_t, std::function<void(const std::uint8_t *)>> data_;
+    std::unique_ptr<void, std::function<void(void *)>> data_;
     size_t size_;
 };

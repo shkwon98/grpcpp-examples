@@ -26,7 +26,8 @@ protected:
 
         if (!writer_.Write(fc))
         {
-            raise_from_system_error_code("The server aborted the connection.", ECONNRESET);
+            throw std::system_error(std::make_error_code(std::errc::connection_aborted),
+                                    "The server aborted the connection.");
         }
     }
 
