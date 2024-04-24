@@ -1,0 +1,261 @@
+syntax = "proto3";
+
+package robl.api;
+
+import "google/protobuf/wrappers.proto";
+
+option java_package         = "com.robl.api";
+option java_outer_classname = "GeometryProto";
+option java_multiple_files  = true;
+
+// Two dimensional vector primitive.
+message Vec2 {
+    double x = 1;
+    double y = 2;
+}
+
+// Two dimensional vector primitive of floats.
+message Vec2f {
+    float x = 1;
+    float y = 2;
+}
+
+// Three dimensional vector primitive.
+message Vec3 {
+    double x = 1;
+    double y = 2;
+    double z = 3;
+}
+
+// Three dimensional vector primitive of floats.
+message Vec3f {
+    float x = 1;
+    float y = 2;
+    float z = 3;
+}
+
+// Four dimensional vector primitive.
+message PolarCoordinate {
+    float r     = 1;  // Radial coordinate
+    float theta = 2;  // Azimuthal coordinate
+}
+
+// Cylindrical coordinates are a generalization of polar coordiates, adding a
+// height
+// axis. See (http://mathworld.wolfram.com/CylindricalCoordinates.html) for
+// more details.
+message CylindricalCoordinate {
+    float r     = 1;  // Radial coordinate
+    float theta = 2;  // Azimuthal coordinate
+    float z     = 3;  // Vertical coordiante
+}
+
+// Quaternion primitive. A quaternion can be used to describe the rotation.
+message Quaternion {
+    float x = 1;
+    float y = 2;
+    float z = 3;
+    float w = 4;
+}
+
+// Plane primitive, described with a point and normal.
+message Plane {
+    Vec3f point  = 1;  // A point on the plane (m).
+    Vec3f normal = 2;  // The direction of the planes normal (unit vector).
+}
+
+// A square oriented in 3D space.
+message Quad {
+    // The center of the quad and the orientation of the normal.
+    // The normal axis is [0, 0, 1].
+    SE3Pose pose = 1;
+    // The side length of the quad.
+    float size = 2;
+}
+
+// A ray in 3D space.
+message Ray {
+    // Base of ray.
+    Vec3f origin = 1;
+
+    // Unit vector defining the direction of the ray.
+    Vec3f direction = 2;
+}
+
+// Geometric primitive to describe 2D position and rotation.
+message SE2Pose {
+    Vec2f position = 1;  // (m)
+    float angle    = 2;  // (rad)
+}
+
+// Geometric primitive that describes a 2D velocity through it's linear and
+// angular components.
+message SE2Velocity {
+    Vec2f linear  = 1;  // (m/s)
+    float angular = 2;  // (rad/s)
+}
+
+// Geometric primitive to couple minimum and maximum SE2Velocities in a single
+// message.
+message SE2VelocityLimit {
+    // If set, limits the maximum velocity.
+    SE2Velocity max_vel = 1;
+    // If set, limits the minimum velocity.
+    SE2Velocity min_vel = 2;
+}
+
+// Geometric primitive to describe 3D position and rotation.
+message SE3Pose {
+    Vec3f position      = 1;  // (m)
+    Quaternion rotation = 2;
+}
+
+// Geometric primitive that describes a 3D velocity through it's linear and
+// angular components.
+message SE3Velocity {
+    Vec3f linear  = 1;  // (m/s)
+    Vec3f angular = 2;  // (rad/s)
+}
+
+// Geometric primitive used to specify forces and torques.
+message Wrench {
+    Vec3f force  = 1;  // (N)
+    Vec3f torque = 2;  // (Nm)
+}
+
+// Geometric primitive describing a two-dimensional box.
+message Box2 {
+    Vec2f size = 1;  // (m)
+}
+
+// Geometric primitive to describe a 2D box in a specific frame.
+message Box2WithFrame {
+    // The box is specified with width (y) and length (x), and the full box is
+    // fixed at an origin, where it's sides are along the coordinate frame's
+    // axes.
+    Box2 box = 1;
+    // The pose of the axis-aligned box is in 'frame_name'.
+    string frame_name = 2;
+    // The transformation of the axis-aligned box into the desired frame
+    // (specified above).
+    SE3Pose frame_name_tform_box = 3;
+}
+
+// Geometric primitive describing a three-dimensional box.
+message Box3 {
+    Vec3f size = 1;  // (m)
+}
+
+// Geometric primitive to describe a 3D box in a specific frame.
+message Box3WithFrame {
+    // The box width (y), length (x), and height (z) are interpreted in, and the
+    // full box is fixed at an origin, where it's sides are along the coordinate
+    // frame's axes.
+    Box3 box = 1;
+    // The pose of the axis-aligned box is in 'frame_name'.
+    string frame_name = 2;
+    // The transformation of the axis-aligned box into the desired frame
+    // (specified above).
+    SE3Pose frame_name_tform_box = 3;
+}
+
+// Represents a row-major order matrix of doubles.
+message Matrix {
+    int32 rows             = 1;
+    int32 cols             = 2;
+    repeated double values = 3;
+}
+
+// Represents a row-major order matrix of floats.
+message Matrixf {
+    int32 rows            = 1;
+    int32 cols            = 2;
+    repeated float values = 3;
+}
+
+// Represents a row-major order matrix of int64.
+message MatrixInt64 {
+    int32 rows            = 1;
+    int32 cols            = 2;
+    repeated int64 values = 3;
+}
+
+// Represents a row-major order matrix of int32.
+message MatrixInt32 {
+    int32 rows            = 1;
+    int32 cols            = 2;
+    repeated int32 values = 3;
+}
+
+// Represents a vector of doubles
+message Vector {
+    repeated double values = 1;
+}
+
+// Polygon in the XY plane.
+// May be concave, but should not self-intersect. Vertices can be specified in
+// either clockwise or counterclockwise orders.
+message Polygon {
+    repeated Vec2f vertices = 1;  // Vertices of the polygon in m.
+}
+
+// Represents a region in the XY plane that consists of a single polygon
+// from which polygons representing exclusion areas may be subtracted.
+//
+// A point is considered to be inside the region if it is inside the inclusion
+// polygon and not inside any of the exclusion polygons.
+//
+// Note that while this can be used to represent a polygon with holes, that
+// exclusions are not necessarily holes:  An exclusion polygon may not be
+// completely inside the inclusion polygon.
+message PolygonWithExclusions {
+    Polygon inclusion           = 5;  // Inclusion polygon.
+    repeated Polygon exclusions = 6;  // Exclusion polygons.
+}
+
+// Represents a circular 2D area.
+message Circle {
+    Vec2f center_pt = 1;  // Center point of the circle in m.
+    float radius    = 2;  // Dimensions in m from center_pt.
+}
+
+// Represents an area in the XY plane. The area can be represented as one of the
+// following:
+//  - A polygon (Polygon)
+//  - A circle (Circle)
+message Area {
+    oneof geometry {
+        Polygon polygon = 1;  // Refer to the Polygon message for details.
+        Circle circle   = 2;  // Refer to the Circle message for details.
+    }
+}
+
+// Represents a volume of space in an unspecified frame.
+message Volume {
+    oneof geometry {
+        Vec3f box = 1;  // Dimensions in m, centered on frame origin.
+    }
+}
+
+// Represents bounds on a value, such that lower < value < upper.
+// If you do not want to specify one side of the bound, set it to
+// an appropriately large (or small) number.
+message Bounds {
+    float lower = 1;  // Lower bound.
+    float upper = 2;  // Upper bound.
+}
+
+// A 2D vector of floats that uses wrapped values so we can tell which elements
+// are set.
+message Vec2Value {
+    google.protobuf.FloatValue x = 1;
+    google.protobuf.FloatValue y = 2;
+}
+
+// A 3D vector of floats that uses wrapped values so we can tell which elements
+// are set.
+message Vec3Value {
+    google.protobuf.FloatValue x = 1;
+    google.protobuf.FloatValue y = 2;
+    google.protobuf.FloatValue z = 3;
+}

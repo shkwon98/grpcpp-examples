@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package robl.api;
+
+option java_package         = "com.robl.api";
+option java_outer_classname = "TestProto";
+option java_multiple_files  = true;
+
+message RegisterAccountRequest {
+    uint32 session_ix = 1;
+    uint32 tick       = 2;
+    string ip_str     = 3;
+    string account    = 4;
+    bytes password    = 5;
+    uint64 realtime   = 6;
+}
+
+message RegisterAccountResponse {
+    uint32 result      = 1;
+    uint32 session_ix  = 2;
+    uint32 tick        = 3;
+    uint32 account_id  = 4;
+    uint32 account_pri = 5;
+    uint32 ip          = 6;
+}
+
+message ClientHeartBeat {
+    uint32 session_ix = 1;
+    uint32 tick   = 2;
+}
+
+message ServerHeartBeat {
+    uint32 result     = 1;
+    uint32 session_ix = 2;
+    uint32 tick       = 3;
+    uint32 om         = 5;
+}
+
+message FileContent {
+    string name = 1;
+    bytes content = 2;
+}
+
+message Status {
+    uint32 code = 1;
+    string message = 2;
+}

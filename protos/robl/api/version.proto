@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package robl.api;
+
+option java_package         = "com.robl.api";
+option java_outer_classname = "VersionProto";
+option java_multiple_files  = true;
+
+import "robl/api/header.proto";
+import "google/protobuf/timestamp.proto";
+
+// The software versioning number for a release.
+message SoftwareVersion {
+    // Signficant changes to software.
+    int32 major_version = 1;
+
+    // Normal changes to software.
+    int32 minor_version = 2;
+
+    // Fixes which should not change intended capabilities or affect
+    // compatibility.
+    int32 patch_level = 3;
+}
+
+// Description of the software release currently running.
+message SoftwareRelease {
+    // The software version, e.g., 2.0.1
+    SoftwareVersion version = 1;
+
+    // The name of the sw package, e.g., "robl-0.1.0"
+    string name = 2;
+
+    // Extra information associated with the build.
+    string build_information = 7;
+
+    // Date/time when release was installed.
+    google.protobuf.Timestamp install_date = 8;
+}
+
+// Request the software release version running.
+message GetSoftwareReleaseRequest {
+    // Default header of the request.
+    robl.api.RequestHeader header = 1;
+}
+
+// Provide the software release version.
+message GetSoftwareReleaseResponse {
+    // Default header of the response.
+    robl.api.ResponseHeader header = 1;
+    // Version of the software currently running.
+    SoftwareRelease version = 2;
+    // Extra detail about the version of software running.
+    // May contain metadata about build dates and configuration.
+    string detail = 3;
+}

@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package robl.api;
+
+option java_package         = "com.robl.api";
+option java_outer_classname = "AuthProto";
+option java_multiple_files  = true;
+
+import "robl/api/header.proto";
+
+// The request message to login.
+message LoginRequest {
+    // Default header of the request. It contains the username.
+    robl.api.RequestHeader header = 1;
+}
+
+// The response message containing the login result.
+message LoginResponse {
+    // Default header of the response.
+    robl.api.ResponseHeader header = 1;
+    // The allocated session id of the user.
+    int32 session_id = 2;
+}
+
+// The request message to logout.
+message LogoutRequest {
+    // Default header of the request.
+    robl.api.RequestHeader header = 1;
+}
+
+// The response message containing the logout result.
+message LogoutResponse {
+    // Default header of the response.
+    robl.api.ResponseHeader header = 1;
+}
+
+message HeartbeatRequest {
+    // Default header of the request.
+    robl.api.RequestHeader header = 1;
+}
+
+message HeartbeatResponse {
+    // Default header of the response.
+    robl.api.ResponseHeader header = 1;
+}
+
+message TakeControlTokenRequest {
+    // Default header of the request.
+    robl.api.RequestHeader header = 1;
+    // Decides whether the user wants to take or release the token.
+    bool wants_to_take = 2;
+}
+
+message TakeControlTokenResponse {
+    // Default header of the response.
+    robl.api.ResponseHeader header = 1;
+
+    enum ControlTokenState {
+        // The token was taken successfully.
+        SUCCESS = 0;
+        // Other user requested the token.
+        TOKEN_REQUESTED = 1;
+        // Notify the user that the token is taken by another user.
+        TOKEN_TAKEN = 2;
+    }
+    ControlTokenState status = 2;
+}
