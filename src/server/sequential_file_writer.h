@@ -96,7 +96,7 @@ private:
         std::ostringstream sts;
         sts << "Error " << action_attempted << " the file " << name_ << ": ";
 
-        assert(0 != err);
+        assert(0 != ec);
         throw std::system_error(std::error_code(ec, std::system_category()), sts.str().c_str());
     }
 

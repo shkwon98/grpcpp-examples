@@ -3,7 +3,7 @@ project( grpc_example_cpp
          LANGUAGES CXX )
 
 # Command-line arguments:
-set( CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE )
+set( CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE )
 set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 
 # Dependencies:

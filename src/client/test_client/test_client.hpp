@@ -7,7 +7,7 @@
 #include <robl/api/service.grpc.pb.h>
 
 // project headers
-#include "file_reader_into_stream.hpp"
+#include "file_stream_provider/file_stream_provider.hpp"
 #include "utils.h"
 
 using namespace std::chrono_literals;
@@ -106,9 +106,9 @@ inline bool TestClient::UploadFile(const std::string &filename)
 
     try
     {
-        auto reader = FileReaderIntoStream(filename, *streamer);
+        auto reader = FileStreamProvider(filename, *streamer);
 
-        const size_t chunk_size = 1 * MB; // Hardcoded to 1MB, which seems to be recommended from experience.
+        const size_t chunk_size = 1 * KB; // Hardcoded to 1MB, which seems to be recommended from experience.
         reader.Read(chunk_size);
     }
     catch (const std::exception &ex)
