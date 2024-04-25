@@ -24,7 +24,7 @@ long long GetSystemTickSeconds()
 int GetSystemTickMinutes()
 {
     auto time = std::chrono::system_clock::now();
-    return (int)(std::chrono::duration_cast<std::chrono::minutes>(time.time_since_epoch()).count());
+    return static_cast<int>(std::chrono::duration_cast<std::chrono::minutes>(time.time_since_epoch()).count());
 }
 
 long long GetSteadyTickNanos()
@@ -48,7 +48,7 @@ long long GetSteadyTickSeconds()
 int GetSteadyTickMinutes()
 {
     auto time = std::chrono::steady_clock::now();
-    return (int)(std::chrono::duration_cast<std::chrono::minutes>(time.time_since_epoch()).count());
+    return static_cast<int>(std::chrono::duration_cast<std::chrono::minutes>(time.time_since_epoch()).count());
 }
 
 } // namespace System

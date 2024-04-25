@@ -1,10 +1,14 @@
-#include <grpcpp/grpcpp.h>
+// standard headers
 #include <iostream>
 #include <memory>
 #include <string>
 #include <thread>
 
-#include "test_service_impl.hpp"
+// grpc headers
+#include <grpcpp/grpcpp.h>
+
+// project headers
+#include "test_service/test_service_impl.hpp"
 
 using grpc::Server;
 using grpc::ServerBuilder;

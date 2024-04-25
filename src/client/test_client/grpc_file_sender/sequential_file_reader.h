@@ -30,7 +30,7 @@ public:
      *
      * @return The file path.
      */
-    std::string GetFilePath() const;
+    std::string GetFilePath(void) const;
 
 protected:
     /**

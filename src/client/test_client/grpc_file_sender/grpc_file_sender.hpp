@@ -8,20 +8,20 @@
 #include <robl/api/test.pb.h>
 
 // project headers
-#include "sequential_file_reader.hpp"
+#include "sequential_file_reader.h"
 
 template <class GrpcWriter>
-class FileStreamProvider : public SequentialFileReader
+class GrpcFileSender : public SequentialFileReader
 {
 public:
-    FileStreamProvider(const std::string &filename, GrpcWriter &writer)
+    GrpcFileSender(const std::string &filename, GrpcWriter &writer)
         : SequentialFileReader(filename)
         , writer_(writer)
     {
     }
 
 protected:
-    virtual void OnChunkAvailable(const void *data, size_t size) override
+    virtual void OnChunkAvailable(const void *data, std::size_t size) override
     {
         robl::api::FileContent fc;
 

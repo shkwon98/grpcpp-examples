@@ -4,7 +4,7 @@
 #include <unistd.h>
 
 // project headers
-#include "sequential_file_reader.hpp"
+#include "sequential_file_reader.h"
 
 /*=========================================================================*/
 
@@ -111,7 +111,7 @@ void SequentialFileReader::Read(std::size_t max_chunk_size)
     }
 }
 
-std::string SequentialFileReader::GetFilePath() const
+std::string SequentialFileReader::GetFilePath(void) const
 {
     return file_.string();
 }
