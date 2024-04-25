@@ -1,11 +1,14 @@
 #pragma once
 
+// standard headers
 #include <cassert>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <string>
+
+/*=========================================================================*/
 
 class SequentialFileWriter
 {
@@ -17,7 +20,12 @@ public:
     SequentialFileWriter(SequentialFileWriter &&) = default;
     SequentialFileWriter &operator=(SequentialFileWriter &&) = default;
 
-    // Open the file at the relative path 'name' for writing. On errors throw std::system_error
+    /**
+     * Opens the file if it is not already open. If the file is already open, this method does nothing.
+     * On errors, this method throws an exception derived from std::system_error.
+     *
+     * @param name The path to the file to be opened.
+     */
     void OpenIfNecessary(const std::filesystem::path &name)
     {
         if (ofs_.is_open())
@@ -45,9 +53,12 @@ public:
         return;
     }
 
-    // Write data from a string. On errors throws an exception drived from std::system_error
-    // This method may take ownership of the string. Hence no assumption may be made about
-    // the data it contains after it returns.
+    /**
+     * Write data from a string. On errors throws an exception derived from std::system_error. This method may take ownership
+     * of the string. Hence no assumption may be made about the data it contains after it returns.
+     *
+     * @param data The data to be written to the file.
+     */
     void Write(std::string &data)
     {
         try
@@ -68,15 +79,26 @@ public:
         return;
     }
 
+    /**
+     * Checks if there is no space left for writing.
+     *
+     * @return true if there is no space left, false otherwise.
+     */
     bool NoSpaceLeft() const
     {
         return no_space_;
     }
 
 private:
-    void RaiseError(const std::string action_attempted, const std::system_error &ex)
+    /**
+     * Raises an error with the specified action attempted and system error.
+     *
+     * @param action_attempted The action that was attempted when the error occurred.
+     * @param err The system error that occurred.
+     */
+    void RaiseError(const std::string action_attempted, const std::system_error &err)
     {
-        const auto ec = ex.code().value();
+        const auto ec = err.code().value();
 
         switch (ec)
         {
@@ -105,3 +127,5 @@ private:
     bool no_space_;
     bool permission_error_;
 };
+
+/*=========================================================================*/
