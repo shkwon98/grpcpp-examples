@@ -1,6 +1,10 @@
 ### My.gitignore ###
 build/
 .vscode/
+*.crt
+*.key
+*.pem
+*.csr
 
 ### CMake.gitignore ###
 CMakeLists.txt.user

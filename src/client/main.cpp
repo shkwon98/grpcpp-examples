@@ -1,5 +1,6 @@
 // standard headers
 #include <chrono>
+#include <fstream>
 #include <string>
 #include <thread>
 #include <vector>
@@ -10,11 +11,35 @@
 // project headers
 #include "test_client/test_client.hpp"
 
+std::string ReadTextFile(const std::string &filename)
+{
+    std::ifstream file(filename.c_str(), std::ios::in);
+    std::stringstream ss;
+    if (file.is_open())
+    {
+        ss << file.rdbuf();
+        file.close();
+    }
+
+    return ss.str();
+}
+
 int main()
 {
     // Connect to the gRPC server
-    const auto server_address = "localhost:50051";
-    auto client = TestClient(grpc::CreateChannel(server_address, grpc::InsecureChannelCredentials()));
+    const auto &server_address = std::string("localhost:50051");
+
+    auto creds = grpc::InsecureChannelCredentials();
+    auto use_ssl = true;
+    if (use_ssl)
+    {
+        auto ssl_opts = grpc::SslCredentialsOptions();
+        ssl_opts.pem_root_certs = ReadTextFile("../../../auth/ca.crt");
+        creds = grpc::SslCredentials(ssl_opts);
+    }
+
+    auto channel = grpc::CreateChannel(server_address, creds);
+    auto client = TestClient(channel);
 
     for (auto i = 0; i < 10; ++i)
     {
