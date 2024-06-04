@@ -24,6 +24,8 @@ service TestService {
 
     // 양방향 스트리밍 RPC. 두 스트림은 독립적으로 동작
     rpc UploadFile(stream FileContent) returns (stream Status);
+
+    rpc GetMarker(MarkerRequest) returns (MarkerResponse);
 }
 
 // Interface for version information.

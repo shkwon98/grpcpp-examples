@@ -6,6 +6,8 @@ option java_package         = "com.robl.api";
 option java_outer_classname = "TestProto";
 option java_multiple_files  = true;
 
+import "google/protobuf/field_mask.proto";
+
 message RegisterAccountRequest {
     uint32 session_id = 1;
     uint32 tick       = 2;
@@ -44,4 +46,22 @@ message FileContent {
 message Status {
     uint32 code = 1;
     string message = 2;
+}
+
+message Marker {
+    optional uint32 id = 1;
+    string name = 2;
+    double latitude = 4;
+    double longitude = 5;
+    float radius = 6;
+    string description = 8;
+}
+
+message MarkerRequest {
+    uint32 id = 1;
+    google.protobuf.FieldMask mask = 2;
+}
+
+message MarkerResponse {
+    Marker marker = 1;
 }

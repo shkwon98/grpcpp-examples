@@ -6,6 +6,7 @@
 #include <thread>
 
 // grpc headers
+#include <google/protobuf/util/field_mask_util.h>
 #include <robl/api/service.grpc.pb.h>
 
 // project headers
@@ -15,6 +16,9 @@
 
 using robl::api::ClientHeartBeat;
 using robl::api::FileContent;
+using robl::api::Marker;
+using robl::api::MarkerRequest;
+using robl::api::MarkerResponse;
 using robl::api::RegisterAccountRequest;
 using robl::api::RegisterAccountResponse;
 using robl::api::ServerHeartBeat;
@@ -37,6 +41,7 @@ public:
     grpc::Status HeartBeat(grpc::ServerContext *context,
                            grpc::ServerReaderWriter<ServerHeartBeat, ClientHeartBeat> *stream) override;
     grpc::Status UploadFile(grpc::ServerContext *context, grpc::ServerReaderWriter<Status, FileContent> *stream) override;
+    grpc::Status GetMarker(grpc::ServerContext *context, const MarkerRequest *request, MarkerResponse *response) override;
 
 private:
     std::filesystem::path root_path_;
@@ -125,6 +130,29 @@ inline grpc::Status TestServiceImpl::UploadFile(grpc::ServerContext *context,
             return grpc::Status(status_code, ex.what());
         }
     }
+
+    return grpc::Status::OK;
+}
+
+inline grpc::Status TestServiceImpl::GetMarker(grpc::ServerContext *context, const MarkerRequest *request,
+                                               MarkerResponse *response)
+{
+    auto id = request->id();
+    if (!google::protobuf::util::FieldMaskUtil::IsValidFieldMask<Marker>(request->mask()))
+    {
+        return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "invalid field mask");
+    }
+
+    auto field_mask = google::protobuf::FieldMask();
+
+    auto *marker = response->mutable_marker();
+
+    marker->set_id(id);
+    marker->set_name("marker");
+    marker->set_latitude(37.7749);
+    marker->set_longitude(-122.4194);
+    marker->set_radius(100.0);
+    marker->set_description("This is a marker");
 
     return grpc::Status::OK;
 }

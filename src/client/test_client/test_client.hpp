@@ -17,6 +17,9 @@ using namespace std::chrono_literals;
 
 using robl::api::ClientHeartBeat;
 using robl::api::FileContent;
+using robl::api::Marker;
+using robl::api::MarkerRequest;
+using robl::api::MarkerResponse;
 using robl::api::RegisterAccountRequest;
 using robl::api::RegisterAccountResponse;
 using robl::api::ServerHeartBeat;
@@ -38,6 +41,7 @@ public:
     RegisterAccountResponse RegisterAccount(const RegisterAccountRequest &request);
     bool HeartBeat(void);
     bool UploadFile(const std::string &filename);
+    MarkerResponse GetMarker(const MarkerRequest &request);
 
 private:
     std::unique_ptr<TestService::Stub> stub_;
@@ -117,7 +121,10 @@ inline bool TestClient::UploadFile(const std::string &filename)
         auto file_sender = GrpcFileSender(filename, *stream);
 
         const auto chunk_size = 1 * KB; // Hardcoded to 1MB, which seems to be recommended from experience.
-        auto future = std::async([&file_sender, chunk_size] { file_sender.Read(chunk_size); });
+        auto future = std::async([&stream, &file_sender, chunk_size] {
+            file_sender.Read(chunk_size);
+            stream->WritesDone();
+        });
 
         Status status;
         while (stream->Read(&status))
@@ -133,9 +140,7 @@ inline bool TestClient::UploadFile(const std::string &filename)
         std::cerr << "Failed to send the file " << filename << ": " << ex.what() << std::endl;
     }
 
-    stream->WritesDone();
     const auto status = stream->Finish();
-
     if (!status.ok())
     {
         std::cerr << "UploadFile rpc failed: " << status.error_code() << ": " << status.error_message() << std::endl;
@@ -143,6 +148,29 @@ inline bool TestClient::UploadFile(const std::string &filename)
     }
 
     return true;
+}
+
+inline MarkerResponse TestClient::GetMarker(const MarkerRequest &request)
+{
+    grpc::ClientContext context;
+    MarkerResponse response;
+
+    const auto status = stub_->GetMarker(&context, request, &response);
+
+    if (!status.ok())
+    {
+        std::cerr << "RegisterAccount rpc failed: " << status.error_code() << ": " << status.error_message() << std::endl;
+        return MarkerResponse();
+    }
+
+    std::cout << "[MarkerResponse] id: " << response.marker().id() << std::endl
+              << "[MarkerResponse] name: " << response.marker().name() << std::endl
+              << "[MarkerResponse] latitude: " << response.marker().latitude() << std::endl
+              << "[MarkerResponse] longitude: " << response.marker().longitude() << std::endl
+              << "[MarkerResponse] radius: " << response.marker().radius() << std::endl
+              << "[MarkerResponse] description: " << response.marker().description() << std::endl;
+
+    return response;
 }
 
 /*=========================================================================*/
