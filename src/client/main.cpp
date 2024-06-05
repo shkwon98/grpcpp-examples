@@ -67,11 +67,7 @@ int main(void)
             threads.emplace_back([&client]() { client.UploadFile("./LICENSE"); });
             break;
         case 3: {
-            MarkerRequest markerRequest;
-            auto mask = std::make_unique<google::protobuf::FieldMask>();
-            mask->add_paths("id__");
-            markerRequest.set_allocated_mask(mask.release());
-            threads.emplace_back([&client, markerRequest]() { client.GetMarker(markerRequest); });
+            threads.emplace_back([&client]() { client.GetMarker(); });
             break;
         }
         default:

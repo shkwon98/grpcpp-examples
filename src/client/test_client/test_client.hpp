@@ -41,7 +41,7 @@ public:
     RegisterAccountResponse RegisterAccount(const RegisterAccountRequest &request);
     bool HeartBeat(void);
     bool UploadFile(const std::string &filename);
-    MarkerResponse GetMarker(const MarkerRequest &request);
+    MarkerResponse GetMarker(void);
 
 private:
     std::unique_ptr<TestService::Stub> stub_;
@@ -150,10 +150,15 @@ inline bool TestClient::UploadFile(const std::string &filename)
     return true;
 }
 
-inline MarkerResponse TestClient::GetMarker(const MarkerRequest &request)
+inline MarkerResponse TestClient::GetMarker(void)
 {
     grpc::ClientContext context;
     MarkerResponse response;
+    MarkerRequest request;
+
+    auto field_mask = std::make_unique<google::protobuf::FieldMask>();
+    field_mask->add_paths("id");
+    request.set_allocated_mask(field_mask.release());
 
     const auto status = stub_->GetMarker(&context, request, &response);
 
@@ -165,8 +170,8 @@ inline MarkerResponse TestClient::GetMarker(const MarkerRequest &request)
 
     std::cout << "[MarkerResponse] id: " << response.marker().id() << std::endl
               << "[MarkerResponse] name: " << response.marker().name() << std::endl
-              << "[MarkerResponse] latitude: " << response.marker().latitude() << std::endl
-              << "[MarkerResponse] longitude: " << response.marker().longitude() << std::endl
+              << "[MarkerResponse] coordinate.latitude: " << response.marker().coordinate().latitude() << std::endl
+              << "[MarkerResponse] coordinate.longitude: " << response.marker().coordinate().longitude() << std::endl
               << "[MarkerResponse] radius: " << response.marker().radius() << std::endl
               << "[MarkerResponse] description: " << response.marker().description() << std::endl;
 

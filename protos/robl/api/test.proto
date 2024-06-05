@@ -48,13 +48,17 @@ message Status {
     string message = 2;
 }
 
+message Coordinate {
+    double latitude = 1;
+    double longitude = 2;
+}
+
 message Marker {
     optional uint32 id = 1;
     string name = 2;
-    double latitude = 4;
-    double longitude = 5;
-    float radius = 6;
-    string description = 8;
+    Coordinate coordinate = 3;
+    float radius = 4;
+    string description = 5;
 }
 
 message MarkerRequest {
