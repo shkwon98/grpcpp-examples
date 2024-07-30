@@ -25,11 +25,11 @@ class TestServiceImpl final : public TestService::CallbackService
     grpc::ServerUnaryReactor *SayHello(grpc::CallbackServerContext *context, const HelloRequest *request,
                                        HelloResponse *reply) override
     {
-        std::string prefix("Hello ");
-        reply->set_message(prefix + request->name());
+        auto *reactor = context->DefaultReactor();
 
-        grpc::ServerUnaryReactor *reactor = context->DefaultReactor();
+        reply->set_message("Hello " + request->name());
         reactor->Finish(grpc::Status::OK);
+
         return reactor;
     }
 
@@ -39,8 +39,9 @@ class TestServiceImpl final : public TestService::CallbackService
         class SubscribeProgressReactor final : public grpc::ServerWriteReactor<SubscribeProgressResponse>
         {
         public:
-            SubscribeProgressReactor(const SubscribeProgressRequest *request)
-                : request_(request)
+            SubscribeProgressReactor(const grpc::CallbackServerContext *context, const SubscribeProgressRequest *request)
+                : context_(context)
+                , request_(request)
                 , total_steps_(19)
                 , current_step_(0)
             {
@@ -64,6 +65,12 @@ class TestServiceImpl final : public TestService::CallbackService
         private:
             void NextWrite(void)
             {
+                if (context_->IsCancelled())
+                {
+                    Finish(grpc::Status::CANCELLED);
+                    return;
+                }
+
                 if (current_step_ <= total_steps_)
                 {
                     std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -76,6 +83,7 @@ class TestServiceImpl final : public TestService::CallbackService
                 Finish(grpc::Status::OK);
             }
 
+            const grpc::CallbackServerContext *context_;
             const SubscribeProgressRequest *request_;
             SubscribeProgressResponse response_;
 
@@ -83,7 +91,7 @@ class TestServiceImpl final : public TestService::CallbackService
             int current_step_;
         };
 
-        return new SubscribeProgressReactor(request);
+        return new SubscribeProgressReactor(context, request);
     }
 
     grpc::ServerBidiReactor<ChatRequest, ChatResponse> *Chat(grpc::CallbackServerContext *context) override
@@ -94,6 +102,10 @@ class TestServiceImpl final : public TestService::CallbackService
             ChatReactor(void)
             {
                 StartRead(&request_);
+            }
+            ~ChatReactor()
+            {
+                std::cout << "ChatReactor deleted" << std::endl;
             }
 
             void OnDone(void) override
