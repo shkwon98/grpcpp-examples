@@ -2,70 +2,77 @@ syntax = "proto3";
 
 package robl.api;
 
-option java_package         = "com.robl.api";
+option java_package = "com.robl.api";
 option java_outer_classname = "TestProto";
-option java_multiple_files  = true;
+option java_multiple_files = true;
 
 import "google/protobuf/field_mask.proto";
 
 message RegisterAccountRequest {
-    uint32 session_id = 1;
-    uint32 tick       = 2;
-    string ip_str     = 3;
-    string account    = 4;
-    bytes password    = 5;
-    uint64 realtime   = 6;
+  uint32 session_id = 1;
+  uint32 tick = 2;
+  string ip_str = 3;
+  string account = 4;
+  bytes password = 5;
+  uint64 realtime = 6;
 }
 
 message RegisterAccountResponse {
-    uint32 result      = 1;
-    uint32 session_id  = 2;
-    uint32 tick        = 3;
-    uint32 account_id  = 4;
-    uint32 account_pri = 5;
-    uint32 ip          = 6;
+  uint32 result = 1;
+  uint32 session_id = 2;
+  uint32 tick = 3;
+  uint32 account_id = 4;
+  uint32 account_pri = 5;
+  uint32 ip = 6;
 }
 
 message ClientHeartBeat {
-    uint32 session_id = 1;
-    uint32 tick   = 2;
+  uint32 session_id = 1;
+  uint32 tick = 2;
 }
 
 message ServerHeartBeat {
-    uint32 result     = 1;
-    uint32 session_id = 2;
-    uint32 tick       = 3;
-    uint32 om         = 5;
+  uint32 result = 1;
+  uint32 session_id = 2;
+  uint32 tick = 3;
+  uint32 om = 5;
 }
 
 message FileContent {
-    string name = 1;
-    bytes content = 2;
+  string name = 1;
+  bytes content = 2;
 }
 
 message Status {
-    uint32 code = 1;
-    string message = 2;
-}
-
-message Coordinate {
-    double latitude = 1;
-    double longitude = 2;
+  uint32 code = 1;
+  string message = 2;
 }
 
 message Marker {
-    optional uint32 id = 1;
-    string name = 2;
-    Coordinate coordinate = 3;
-    float radius = 4;
-    string description = 5;
+  optional uint32 id = 1;
+  string name = 2;
+  float radius = 3;
+  string description = 4;
+
+  message Coordinate {
+    double latitude = 1;
+    double longitude = 2;
+  }
+  Coordinate coordinate = 5;
+}
+
+message MarkerInfo {
+  uint32 total_count = 1;
+  repeated Marker markers = 2;
 }
 
 message MarkerRequest {
-    uint32 id = 1;
-    google.protobuf.FieldMask mask = 2;
+  uint32 id = 1;
+  google.protobuf.FieldMask mask = 2;
 }
 
-message MarkerResponse {
-    Marker marker = 1;
-}
+message MarkerResponse { MarkerInfo marker_info = 1; }
+
+message HelloRequest { string name = 1; }
+
+message HelloResponse { string message = 1; }

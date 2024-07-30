@@ -17,7 +17,7 @@ using namespace std::chrono_literals;
 
 using robl::api::ClientHeartBeat;
 using robl::api::FileContent;
-using robl::api::Marker;
+using robl::api::MarkerInfo;
 using robl::api::MarkerRequest;
 using robl::api::MarkerResponse;
 using robl::api::RegisterAccountRequest;
@@ -157,7 +157,7 @@ inline MarkerResponse TestClient::GetMarker(void)
     MarkerRequest request;
 
     auto field_mask = std::make_unique<google::protobuf::FieldMask>();
-    field_mask->add_paths("id");
+    field_mask->add_paths("markers");
     request.set_allocated_mask(field_mask.release());
 
     const auto status = stub_->GetMarker(&context, request, &response);
@@ -168,12 +168,14 @@ inline MarkerResponse TestClient::GetMarker(void)
         return MarkerResponse();
     }
 
-    std::cout << "[MarkerResponse] id: " << response.marker().id() << std::endl
-              << "[MarkerResponse] name: " << response.marker().name() << std::endl
-              << "[MarkerResponse] coordinate.latitude: " << response.marker().coordinate().latitude() << std::endl
-              << "[MarkerResponse] coordinate.longitude: " << response.marker().coordinate().longitude() << std::endl
-              << "[MarkerResponse] radius: " << response.marker().radius() << std::endl
-              << "[MarkerResponse] description: " << response.marker().description() << std::endl;
+    std::cout << "[MarkerResponse] id: " << response.marker_info().markers(1).id() << std::endl
+              << "[MarkerResponse] name: " << response.marker_info().markers(1).name() << std::endl
+              << "[MarkerResponse] coordinate.latitude: " << response.marker_info().markers(1).coordinate().latitude()
+              << std::endl
+              << "[MarkerResponse] coordinate.longitude: " << response.marker_info().markers(1).coordinate().longitude()
+              << std::endl
+              << "[MarkerResponse] radius: " << response.marker_info().markers(1).radius() << std::endl
+              << "[MarkerResponse] description: " << response.marker_info().markers(1).description() << std::endl;
 
     return response;
 }

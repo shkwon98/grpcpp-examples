@@ -9,7 +9,7 @@
 #include <grpcpp/grpcpp.h>
 
 // project headers
-#include "test_client/test_client.hpp"
+#include "test_client.hpp"
 
 std::string ReadTextFile(const std::string &filename)
 {
@@ -42,7 +42,7 @@ int main(void)
     auto client = TestClient(channel);
 
     auto threads = std::vector<std::thread>();
-    // threads.emplace_back([&client]() { client.HeartBeat(); });
+    threads.emplace_back([&client]() { client.HeartBeat(); });
 
     auto req = 0;
     while (req != -1)

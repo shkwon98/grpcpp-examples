@@ -24,7 +24,8 @@ file(GLOB_RECURSE robl_protos_files CONFIGURE_DEPENDS
 add_library(robl_api ${robl_protos_files})
 target_link_libraries(robl_api
     PUBLIC ${PROTOBUF_LIBRARIES}
-           gRPC::grpc++)
+           gRPC::grpc++
+           gRPC::grpc++_reflection)
 target_include_directories(robl_api
     PUBLIC ${protos_OUTPUT_DIR})
 protobuf_generate(TARGET robl_api

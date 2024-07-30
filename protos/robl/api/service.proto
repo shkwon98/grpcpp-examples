@@ -2,9 +2,9 @@ syntax = "proto3";
 
 package robl.api;
 
-option java_package         = "com.robl.api";
+option java_package = "com.robl.api";
 option java_outer_classname = "ServiceProto";
-option java_multiple_files  = true;
+option java_multiple_files = true;
 
 import "robl/api/test.proto";
 import "robl/api/version.proto";
@@ -12,36 +12,37 @@ import "robl/api/auth.proto";
 
 // The TestService provides methods that allow clients to test the connection.
 service TestService {
-    // 단일 request, 단일 response
-    rpc RegisterAccount(RegisterAccountRequest)
-        returns (RegisterAccountResponse);
+  // 단일 request, 단일 response
+  rpc RegisterAccount(RegisterAccountRequest) returns (RegisterAccountResponse);
 
-    // 메세지 스트림을 계속 보냄. 클라이언트가 Msg를 그만 보내면, response를
-    // 받음 rpc LotsOfGreetings(stream HelloRequest) returns (HelloResponse);
+  // 메세지 스트림을 계속 보냄. 클라이언트가 Msg를 그만 보내면, response를
+  // 받음 rpc LotsOfGreetings(stream HelloRequest) returns (HelloResponse);
 
-    // 양방향 스트리밍 RPC. 두 스트림은 독립적으로 동작
-    rpc HeartBeat(stream ClientHeartBeat) returns (stream ServerHeartBeat);
+  // 양방향 스트리밍 RPC. 두 스트림은 독립적으로 동작
+  rpc HeartBeat(stream ClientHeartBeat) returns (stream ServerHeartBeat);
 
-    // 양방향 스트리밍 RPC. 두 스트림은 독립적으로 동작
-    rpc UploadFile(stream FileContent) returns (stream Status);
+  // 양방향 스트리밍 RPC. 두 스트림은 독립적으로 동작
+  rpc UploadFile(stream FileContent) returns (stream Status);
 
-    rpc GetMarker(MarkerRequest) returns (MarkerResponse);
+  rpc GetMarker(MarkerRequest) returns (MarkerResponse);
+
+  rpc SayHello(HelloRequest) returns (HelloResponse);
 }
 
 // Interface for version information.
 service VersionService {
-    // Call this every time when you want to get the version information of the
-    // software running on the boat system.
-    rpc GetSoftwareRelease(GetSoftwareReleaseRequest)
-        returns (GetSoftwareReleaseResponse);
+  // Call this every time when you want to get the version information of the
+  // software running on the boat system.
+  rpc GetSoftwareRelease(GetSoftwareReleaseRequest)
+      returns (GetSoftwareReleaseResponse);
 }
 
 // Interface for session control.
 service AuthService {
-    // Call this at first when you want to login to the boat system.
-    rpc Login(LoginRequest) returns (LoginResponse);
-    // Call this at last when you want to logout from the boat system.
-    rpc Logout(LogoutRequest) returns (LogoutResponse);
-    // Call this once to check if the session is still alive.
-    rpc Heartbeat(stream HeartbeatRequest) returns (stream HeartbeatResponse);
+  // Call this at first when you want to login to the boat system.
+  rpc Login(LoginRequest) returns (LoginResponse);
+  // Call this at last when you want to logout from the boat system.
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
+  // Call this once to check if the session is still alive.
+  rpc Heartbeat(stream HeartbeatRequest) returns (stream HeartbeatResponse);
 }

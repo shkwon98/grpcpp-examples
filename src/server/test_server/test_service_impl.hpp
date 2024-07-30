@@ -16,7 +16,7 @@
 
 using robl::api::ClientHeartBeat;
 using robl::api::FileContent;
-using robl::api::Marker;
+using robl::api::MarkerInfo;
 using robl::api::MarkerRequest;
 using robl::api::MarkerResponse;
 using robl::api::RegisterAccountRequest;
@@ -80,10 +80,14 @@ inline grpc::Status TestServiceImpl::HeartBeat(grpc::ServerContext *context,
 {
     ServerHeartBeat serverHeartBeat;
     ClientHeartBeat clientHeartBeat;
+
     while (stream->Read(&clientHeartBeat))
     {
-        std::cout << "[HeartBeat] session_id: " << clientHeartBeat.session_id() << std::endl
-                  << "[HeartBeat] tick: " << clientHeartBeat.tick() << std::endl;
+        // std::cout << "[HeartBeat] session_id: " << clientHeartBeat.session_id() << std::endl
+        //           << "[HeartBeat] tick: " << clientHeartBeat.tick() << std::endl;
+
+        // std::cout << clientHeartBeat.DebugString() << std::endl;
+        std::cout << clientHeartBeat.ShortDebugString() << std::endl;
 
         serverHeartBeat.set_result(0);
         serverHeartBeat.set_session_id(clientHeartBeat.session_id());
@@ -138,7 +142,7 @@ inline grpc::Status TestServiceImpl::GetMarker(grpc::ServerContext *context, con
                                                MarkerResponse *response)
 {
     auto id = request->id();
-    if (!google::protobuf::util::FieldMaskUtil::IsValidFieldMask<Marker>(request->mask()))
+    if (!google::protobuf::util::FieldMaskUtil::IsValidFieldMask<MarkerInfo>(request->mask()))
     {
         return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "invalid field mask");
     }
@@ -149,23 +153,23 @@ inline grpc::Status TestServiceImpl::GetMarker(grpc::ServerContext *context, con
 
     std::cout << ">>> 1: " << google::protobuf::util::FieldMaskUtil::ToString(field_mask_1) << std::endl;
 
-    google::protobuf::util::FieldMaskUtil::AddPathToFieldMask<Marker>("id", &field_mask_1);
-    google::protobuf::util::FieldMaskUtil::AddPathToFieldMask<Marker>("coordinate.latitude", &field_mask_1);
+    google::protobuf::util::FieldMaskUtil::AddPathToFieldMask<MarkerInfo>("total_count", &field_mask_1);
+    google::protobuf::util::FieldMaskUtil::AddPathToFieldMask<MarkerInfo>("markers", &field_mask_1);
     std::cout << ">>> 2: " << google::protobuf::util::FieldMaskUtil::ToString(field_mask_1) << std::endl;
 
-    google::protobuf::util::FieldMaskUtil::FromFieldNumbers<Marker>({ 1, 3, 4 }, &field_mask_2);
+    google::protobuf::util::FieldMaskUtil::FromFieldNumbers<MarkerInfo>({ 1, 2 }, &field_mask_2);
     std::cout << ">>> 3: " << google::protobuf::util::FieldMaskUtil::ToString(field_mask_2) << std::endl;
 
     google::protobuf::util::FieldMaskUtil::ToCanonicalForm(field_mask_1, &field_mask_3);
     std::cout << ">>> 4: " << google::protobuf::util::FieldMaskUtil::ToString(field_mask_3) << std::endl;
 
-    google::protobuf::util::FieldMaskUtil::GetFieldMaskForAllFields<Marker>(&field_mask_1);
+    google::protobuf::util::FieldMaskUtil::GetFieldMaskForAllFields<MarkerInfo>(&field_mask_1);
     std::cout << ">>> 5: " << google::protobuf::util::FieldMaskUtil::ToString(field_mask_1) << std::endl;
 
     google::protobuf::util::FieldMaskUtil::Intersect(field_mask_1, field_mask_2, &field_mask_3);
     std::cout << ">>> 6: " << google::protobuf::util::FieldMaskUtil::ToString(field_mask_3) << std::endl;
 
-    google::protobuf::util::FieldMaskUtil::Subtract<Marker>(field_mask_1, field_mask_2, &field_mask_3);
+    google::protobuf::util::FieldMaskUtil::Subtract<MarkerInfo>(field_mask_1, field_mask_2, &field_mask_3);
     std::cout << ">>> 7: " << google::protobuf::util::FieldMaskUtil::ToString(field_mask_3) << std::endl;
 
     google::protobuf::util::FieldMaskUtil::Union(field_mask_1, field_mask_2, &field_mask_3);
@@ -174,27 +178,27 @@ inline grpc::Status TestServiceImpl::GetMarker(grpc::ServerContext *context, con
     std::cout << "IsPathInFieldMask(\"id\", field_mask_1): " << std::boolalpha
               << google::protobuf::util::FieldMaskUtil::IsPathInFieldMask("id", field_mask_1) << std::endl;
 
-    std::cout << "IsValidPath<Marker>(\"id\"): " << std::boolalpha
-              << google::protobuf::util::FieldMaskUtil::IsValidPath<Marker>("id") << std::endl;
+    std::cout << "IsValidPath<MarkerInfo>(\"id\"): " << std::boolalpha
+              << google::protobuf::util::FieldMaskUtil::IsValidPath<MarkerInfo>("id") << std::endl;
 
-    Marker marker;
-    marker.set_id(1);
-    // marker.set_name("marker");
-    marker.mutable_coordinate()->set_latitude(37.7749);
-    marker.mutable_coordinate()->set_longitude(-122.4194);
-    marker.set_radius(100.0);
-    marker.set_description("This is a marker");
+    MarkerInfo marker_info;
+    marker_info.mutable_markers(1)->set_id(1);
+    marker_info.mutable_markers(1)->mutable_coordinate()->set_latitude(37.7749);
+    marker_info.mutable_markers(1)->mutable_coordinate()->set_longitude(-122.4194);
+    marker_info.mutable_markers(1)->set_radius(100.0);
+    marker_info.mutable_markers(1)->set_description("This is a marker");
 
-    response->mutable_marker()->set_name("marker");
+    response->mutable_marker_info()->mutable_markers(1)->set_name("marker");
 
     auto options = google::protobuf::util::FieldMaskUtil::MergeOptions();
     options.set_replace_message_fields(true);
     options.set_replace_repeated_fields(true);
 
-    google::protobuf::util::FieldMaskUtil::MergeMessageTo(marker, field_mask_2, options, response->mutable_marker());
+    google::protobuf::util::FieldMaskUtil::MergeMessageTo(marker_info, field_mask_1, options,
+                                                          response->mutable_marker_info());
     std::cout << response->DebugString() << std::endl;
 
-    google::protobuf::util::FieldMaskUtil::TrimMessage(field_mask_2, response->mutable_marker());
+    google::protobuf::util::FieldMaskUtil::TrimMessage(field_mask_2, response->mutable_marker_info());
     std::cout << response->DebugString() << std::endl;
 
     // std::cout << "[GetMarker] id: " << id << std::endl << "[GetMarker] mask: " << field_mask_1 << std::endl;

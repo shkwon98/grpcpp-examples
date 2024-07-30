@@ -9,7 +9,7 @@
 #include <grpcpp/grpcpp.h>
 
 // project headers
-#include "test_service/test_service_impl.hpp"
+#include "test_service_impl.hpp"
 
 using grpc::Server;
 using grpc::ServerBuilder;
