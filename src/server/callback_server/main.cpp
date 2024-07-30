@@ -1,7 +1,9 @@
 // standard headers
+#include <chrono>
 #include <iostream>
 #include <memory>
 #include <string>
+#include <thread>
 
 // grpc headers
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
@@ -9,8 +11,12 @@
 #include <grpcpp/health_check_service_interface.h>
 #include <robl/api/service.grpc.pb.h>
 
+using robl::api::ChatRequest;
+using robl::api::ChatResponse;
 using robl::api::HelloRequest;
 using robl::api::HelloResponse;
+using robl::api::SubscribeProgressRequest;
+using robl::api::SubscribeProgressResponse;
 using robl::api::TestService;
 
 // Logic and data behind the server's behavior.
@@ -25,6 +31,100 @@ class TestServiceImpl final : public TestService::CallbackService
         grpc::ServerUnaryReactor *reactor = context->DefaultReactor();
         reactor->Finish(grpc::Status::OK);
         return reactor;
+    }
+
+    grpc::ServerWriteReactor<SubscribeProgressResponse> *SubscribeProgress(grpc::CallbackServerContext *context,
+                                                                           const SubscribeProgressRequest *request) override
+    {
+        class SubscribeProgressReactor final : public grpc::ServerWriteReactor<SubscribeProgressResponse>
+        {
+        public:
+            SubscribeProgressReactor(const SubscribeProgressRequest *request)
+                : request_(request)
+                , total_steps_(19)
+                , current_step_(0)
+            {
+                NextWrite();
+            }
+            ~SubscribeProgressReactor()
+            {
+                std::cout << "SubscribeProgressReactor deleted" << std::endl;
+            }
+
+            void OnDone(void) override
+            {
+                delete this;
+            }
+
+            void OnWriteDone(bool ok) override
+            {
+                NextWrite();
+            }
+
+        private:
+            void NextWrite(void)
+            {
+                if (current_step_ <= total_steps_)
+                {
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+                    response_.set_progress(100.0 * current_step_++ / total_steps_);
+                    StartWrite(&response_);
+                    return;
+                }
+
+                Finish(grpc::Status::OK);
+            }
+
+            const SubscribeProgressRequest *request_;
+            SubscribeProgressResponse response_;
+
+            int total_steps_;
+            int current_step_;
+        };
+
+        return new SubscribeProgressReactor(request);
+    }
+
+    grpc::ServerBidiReactor<ChatRequest, ChatResponse> *Chat(grpc::CallbackServerContext *context) override
+    {
+        class ChatReactor final : public grpc::ServerBidiReactor<ChatRequest, ChatResponse>
+        {
+        public:
+            ChatReactor(void)
+            {
+                StartRead(&request_);
+            }
+
+            void OnDone(void) override
+            {
+                delete this;
+            }
+
+            void OnReadDone(bool ok) override
+            {
+                if (ok)
+                {
+                    response_.set_message("You said: " + request_.message());
+                    StartWrite(&response_);
+                }
+                else
+                {
+                    Finish(grpc::Status::OK);
+                }
+            }
+
+            void OnWriteDone(bool ok) override
+            {
+                StartRead(&request_);
+            }
+
+        private:
+            ChatRequest request_;
+            ChatResponse response_;
+        };
+
+        return new ChatReactor();
     }
 };
 

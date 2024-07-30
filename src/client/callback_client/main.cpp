@@ -7,6 +7,7 @@
 
 // grpc headers
 #include <grpcpp/grpcpp.h>
+#include <robl/api/route_guide.grpc.pb.h>
 #include <robl/api/service.grpc.pb.h>
 
 using robl::api::HelloRequest;

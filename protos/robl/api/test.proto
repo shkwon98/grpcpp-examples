@@ -76,3 +76,9 @@ message MarkerResponse { MarkerInfo marker_info = 1; }
 message HelloRequest { string name = 1; }
 
 message HelloResponse { string message = 1; }
+
+message SubscribeProgressRequest {}
+message SubscribeProgressResponse { float progress = 1; }
+
+message ChatRequest { string message = 1; }
+message ChatResponse { string message = 1; }

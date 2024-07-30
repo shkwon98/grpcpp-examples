@@ -27,6 +27,9 @@ service TestService {
   rpc GetMarker(MarkerRequest) returns (MarkerResponse);
 
   rpc SayHello(HelloRequest) returns (HelloResponse);
+  rpc SubscribeProgress(SubscribeProgressRequest)
+      returns (stream SubscribeProgressResponse);
+  rpc Chat(stream ChatRequest) returns (stream ChatResponse);
 }
 
 // Interface for version information.

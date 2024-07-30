@@ -2,13 +2,18 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <thread>
 
 // grpc headers
 #include <grpcpp/grpcpp.h>
 #include <robl/api/service.grpc.pb.h>
 
+using robl::api::ChatRequest;
+using robl::api::ChatResponse;
 using robl::api::HelloRequest;
 using robl::api::HelloResponse;
+using robl::api::SubscribeProgressRequest;
+using robl::api::SubscribeProgressResponse;
 using robl::api::TestService;
 
 class TestClient
@@ -49,6 +54,64 @@ public:
         }
     }
 
+    void SubscribeProgress(void)
+    {
+        SubscribeProgressRequest request;
+        SubscribeProgressResponse response;
+
+        grpc::ClientContext context;
+        std::unique_ptr<grpc::ClientReader<SubscribeProgressResponse>> reader(stub_->SubscribeProgress(&context, request));
+
+        while (reader->Read(&response))
+        {
+            std::cout << "Received: " << response.progress() << std::endl;
+        }
+
+        grpc::Status status = reader->Finish();
+        if (!status.ok())
+        {
+            std::cout << status.error_code() << ": " << status.error_message() << std::endl;
+        }
+        else
+        {
+            std::cout << "Subscription Finished!" << std::endl;
+        }
+    }
+
+    void Chat(void)
+    {
+        grpc::ClientContext context;
+        std::shared_ptr<grpc::ClientReaderWriter<ChatRequest, ChatResponse>> stream(stub_->Chat(&context));
+
+        std::thread writer([stream]() {
+            ChatRequest request;
+            while (std::getline(std::cin, *request.mutable_message()))
+            {
+                if (request.message() == "q")
+                {
+                    std::cout << "You closed the chat" << std::endl;
+                    break;
+                }
+
+                stream->Write(request);
+            }
+            stream->WritesDone();
+        });
+
+        ChatResponse response;
+        while (stream->Read(&response))
+        {
+            std::cout << "Received: " << response.message() << std::endl;
+        }
+
+        writer.join();
+        grpc::Status status = stream->Finish();
+        if (!status.ok())
+        {
+            std::cout << status.error_code() << ": " << status.error_message() << std::endl;
+        }
+    }
+
 private:
     std::unique_ptr<TestService::Stub> stub_;
 };
@@ -61,6 +124,12 @@ int main(void)
     std::string user("world");
     std::string reply = client.SayHello(user);
     std::cout << "Client received: " << reply << std::endl;
+
+    std::thread t1(&TestClient::SubscribeProgress, &client);
+    std::thread t2(&TestClient::Chat, &client);
+
+    t1.join();
+    t2.join();
 
     return 0;
 }
