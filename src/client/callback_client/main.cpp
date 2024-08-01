@@ -136,8 +136,8 @@ public:
             {
                 stub->async()->Chat(&context_, this);
                 StartCall();
-                NextWrite();
                 StartRead(&response_);
+                NextWrite();
             }
 
             void OnWriteDone(bool /*ok*/) override

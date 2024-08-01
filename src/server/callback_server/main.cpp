@@ -99,17 +99,23 @@ class TestServiceImpl final : public TestService::CallbackService
         class ChatReactor final : public grpc::ServerBidiReactor<ChatRequest, ChatResponse>
         {
         public:
-            ChatReactor(void)
+            ChatReactor(const grpc::CallbackServerContext *context)
+                : context_(context)
+                , done_(false)
             {
                 StartRead(&request_);
+                sender_ = std::thread(&ChatReactor::SendEverySecond, this);
             }
             ~ChatReactor()
             {
                 std::cout << "ChatReactor deleted" << std::endl;
             }
 
-            void OnDone(void) override
+            void OnDone() override
             {
+                std::cout << "ChatReactor::OnDone" << std::endl;
+                done_ = true;
+                sender_.join();
                 delete this;
             }
 
@@ -119,6 +125,7 @@ class TestServiceImpl final : public TestService::CallbackService
                 {
                     response_.set_message("You said: " + request_.message());
                     StartWrite(&response_);
+                    StartRead(&request_);
                 }
                 else
                 {
@@ -128,15 +135,32 @@ class TestServiceImpl final : public TestService::CallbackService
 
             void OnWriteDone(bool ok) override
             {
-                StartRead(&request_);
+            }
+
+            void SendEverySecond()
+            {
+                while (!done_)
+                {
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+                    time_response_.set_message("Server: " + std::to_string(std::time(nullptr)));
+                    if (!done_) // Check for cancellation before writing
+                    {
+                        StartWrite(&time_response_);
+                    }
+                }
             }
 
         private:
+            const grpc::CallbackServerContext *context_;
             ChatRequest request_;
             ChatResponse response_;
+            ChatResponse time_response_;
+            std::thread sender_;
+            std::atomic_bool done_;
         };
 
-        return new ChatReactor();
+        return new ChatReactor(context);
     }
 };
 
